@@ -1,6 +1,7 @@
 'use strict';
 
 const istanbul = require('istanbul-api');
+const minimatch = require('minimatch');
 const util = require('./util');
 
 const BROWSER_PLACEHOLDER = '%browser%';
@@ -37,6 +38,7 @@ function CoverageIstanbulReporter(baseReporterDecorator, logger, config) {
 
     browsers.forEach(browser => {
       const coverageIstanbulReporter = Object.assign({}, config.coverageIstanbulReporter);
+      const coverageIgnorePatterns = Object.assign([], config.coverageIgnorePatterns);
       if (coverageIstanbulReporter.dir) {
         coverageIstanbulReporter.dir = coverageIstanbulReporter.dir.replace(BROWSER_PLACEHOLDER, browser.name);
       }
@@ -59,6 +61,9 @@ function CoverageIstanbulReporter(baseReporterDecorator, logger, config) {
       const sourceMapStore = istanbul.libSourceMaps.createSourceMapStore();
 
       Object.keys(coverage).forEach(filename => {
+        for (let i = 0; i < coverageIgnorePatterns.length; i++) {
+          if (minimatch(filename, coverageIgnorePatterns[i])) return;
+        }
         const fileCoverage = coverage[filename];
         if (fileCoverage.inputSourceMap && coverageIstanbulReporter.fixWebpackSourcePaths) {
           fileCoverage.inputSourceMap = util.fixWebpackSourcePaths(fileCoverage.inputSourceMap);
